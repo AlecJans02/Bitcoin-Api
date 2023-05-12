@@ -1,12 +1,84 @@
 ﻿@page "/"
+@using System.Text.Json;
+@inject HttpClient HttpClient
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Bitcoin Api</PageTitle>
 
-<MudText Typo="Typo.h3" GutterBottom="true">Hello, world!</MudText>
-<MudText Class="mb-8">Welcome to your new app, powered by MudBlazor!</MudText>
-<MudAlert Severity="Severity.Normal">
-    You can find documentation and examples on our website here:
-    <MudLink Href="https://mudblazor.com" Typo="Typo.body2" Color="Color.Inherit">
-        <b>www.mudblazor.com</b>
-    </MudLink>
-</MudAlert>
+<MudImage Src="images/bitcoin.png"  Style="height: 200px; width: 200px;" Class="pb-4"/>
+<MudText Typo="Typo.h3" GutterBottom="true" Style="font-weight: bold;">@refreshValue</MudText>
+<MudText Typo="Typo.h3" GutterBottom="true" Style="font-weight: bold;">@refreshTime</MudText>
+<MudText Class="mb-8">Above is the real time value of bitcoin provided from Coindesk (per minute)</MudText>
+<MudButton Variant="Variant.Filled" @onclick="MakeGetRequest" Color="Color.Secondary">Refresh</MudButton>
+
+@code {
+
+    string refreshTime { get; set; }
+    string refreshValue { get; set; }
+
+    public class RootObject
+    {
+        public Time time { get; set; }
+        public string disclaimer { get; set; }
+        public string chartName { get; set; }
+        public Bpi bpi { get; set; }
+    }
+
+    public class Time
+    {
+        public string updated { get; set; }
+        public string updatedISO { get; set; }
+        public string updateduk { get; set; }
+    }
+
+    public class Bpi
+    {
+        public USD USD { get; set; }
+        public GBP GBP { get; set; }
+        public EUR EUR { get; set; }
+    }
+
+    public class USD
+    {
+        public string code { get; set; }
+        public string symbol { get; set; }
+        public string rate { get; set; }
+        public string description { get; set; }
+        public double rate_float { get; set; }
+    }
+
+    public class GBP
+    {
+        public string code { get; set; }
+        public string symbol { get; set; }
+        public string rate { get; set; }
+        public string description { get; set; }
+        public double rate_float { get; set; }
+    }
+
+    public class EUR
+    {
+        public string code { get; set; }
+        public string symbol { get; set; }
+        public string rate { get; set; }
+        public string description { get; set; }
+        public double rate_float { get; set; }
+    }
+
+    private async Task MakeGetRequest()
+    {
+        var response = await HttpClient.GetAsync("https://api.coindesk.com/v1/bpi/currentprice.json");
+        var content = await response.Content.ReadFromJsonAsync<RootObject>();
+
+        Console.WriteLine("currency" + content.bpi.USD.rate);
+
+        Console.WriteLine("time" + content.time.updated);
+
+        refreshTime = content.time.updated;
+        refreshValue = "$ " + content.bpi.USD.rate + " USD";
+    }
+
+    protected override async Task OnInitializedAsync ()
+    {
+        await MakeGetRequest();
+    }
+}
